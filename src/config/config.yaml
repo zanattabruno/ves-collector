@@ -1,13 +1,17 @@
 # Config File for Ves Collector
+
+# Server configuration
 server:
-  host: "0.0.0.0"
-  port: 9999
-  debug: true
+  host: "0.0.0.0" # Host IP address
+  port: 9999 # Port number
+  debug: true # Debug mode
 
+# Kafka configuration
 kafka:
-  host: "kafka.nonrtric.svc.cluster.local"
-  port: 9092
-  default_topic: "ves"
+  host: "kafka.nonrtric.svc.cluster.local" # Kafka host
+  port: 9092 # Kafka port number
+  default_topic: "ves" # Default Kafka topic
 
+# Logging configuration
 logging:
-  level: INFO
+  level: INFO # Logging level
