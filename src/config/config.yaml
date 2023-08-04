@@ -1,0 +1,8 @@
+# Config File for Ves Collector
+server:
+  host: "0.0.0.0"
+  port: 9999
+  debug: true
+
+logging:
+  level: DEBUG
