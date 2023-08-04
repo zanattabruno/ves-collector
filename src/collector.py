@@ -8,6 +8,12 @@ import json
 app = Flask(__name__)
 
 def load_config():
+    """
+    Load configuration from a YAML file.
+
+    Returns:
+        dict: Configuration values.
+    """
     with open("config/config.yaml", "r") as yamlfile:
         return yaml.safe_load(yamlfile)
 
@@ -20,16 +26,34 @@ logger = logging.getLogger(__name__)
 
 @app.route("/", methods=["GET"])
 def main_page():
+    """
+    Main page of the Flask app.
+
+    Returns:
+        str: "OK" with HTTP status code 200.
+    """
     logger.info("Accessed main page.")
     return "OK", 200
 
 @app.route("/error", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 def error_html():
+    """
+    Error endpoint of the Flask app.
+
+    Returns:
+        str: "Error occurred" with HTTP status code 500.
+    """
     logger.warning("Error endpoint accessed.")
     return "Error occurred", 500
 
 @app.route("/eventListener/v5", methods=["POST"])
 def receive_event():
+    """
+    Endpoint for receiving a single event.
+
+    Returns:
+        str: "OK" with HTTP status code 200 if successful, "ERROR" with HTTP status code 500 if unsuccessful.
+    """
     logger.info("Received event at /eventListener/v5")
     try:
         body = request.get_data().decode('utf-8')
@@ -54,6 +78,12 @@ def receive_event():
     
 @app.route("/eventListener/v5/eventBatch", methods=["POST"])
 def receive_event_batch():
+    """
+    Endpoint for receiving a batch of events.
+
+    Returns:
+        str: "OK" with HTTP status code 200 if successful, "ERROR" with HTTP status code 500 if unsuccessful.
+    """
     logger.info("Received event batch at /eventListener/v5/eventBatch")
     try:
         body = request.get_data().decode('utf-8')
@@ -77,6 +107,15 @@ def receive_event_batch():
         return "ERROR", 500
 
 def save_event_in_kafka(body):
+    """
+    Save an event in Kafka.
+
+    Args:
+        body (str): JSON string representing the event.
+
+    Raises:
+        ValueError: If the JSON body does not contain 'event' or 'eventList'.
+    """
     jobj = json.loads(body)
     if 'commonEventHeader' in jobj['event']:
         # store each domain information in individual topic
@@ -90,6 +129,16 @@ def save_event_in_kafka(body):
 
 
 def produce_events_in_kafka(jobj, topic):
+    """
+    Produce events in Kafka.
+
+    Args:
+        jobj (dict): Dictionary representing the event.
+        topic (str): Name of the Kafka topic.
+
+    Raises:
+        Exception: If there is an error while posting the event into Kafka.
+    """
     try:
         producer = KafkaProducer(bootstrap_servers=[config['kafka']['host']],
                                     value_serializer=lambda x:
