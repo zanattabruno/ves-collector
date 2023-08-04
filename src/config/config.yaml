@@ -4,5 +4,10 @@ server:
   port: 9999
   debug: true
 
+kafka:
+  host: "kafka.nonrtric.svc.cluster.local"
+  port: 9092
+  default_topic: "ves"
+
 logging:
-  level: DEBUG
+  level: INFO

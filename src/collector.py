@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
+from kafka import KafkaProducer
+from json import dumps
 import yaml
 import logging
 import json
@@ -34,8 +36,7 @@ def receive_event():
         decoded_body = json.loads(body)
         logger.debug('Decoded body:\n%s', json.dumps(decoded_body, indent=4))
         if 'eventList' in decoded_body:
-            events = decoded_body['eventList']
-            
+            events = decoded_body['eventList']            
         elif decoded_body.get('event'):  # Using .get() to safely check for 'event' key
             events = [decoded_body['event']]
         else:
@@ -44,8 +45,8 @@ def receive_event():
         for event in events:
             save_body = {}
             save_body['event'] = event
-            #logger.debug('Event body:\n%s', json.dumps(save_body, indent=4))
-            #save_event_in_kafka(json.dumps(save_body))
+            logger.debug('Event body:\n%s', json.dumps(save_body, indent=4))
+            save_event_in_kafka(json.dumps(save_body))
         return "OK", 200
     except Exception as e:
         logger.error('Getting error while posting event into kafka bus {0}'.format(e))
@@ -60,7 +61,6 @@ def receive_event_batch():
         logger.debug('Decoded body:\n%s', json.dumps(decoded_body, indent=4))
         if 'eventList' in decoded_body:
             events = decoded_body['eventList']
-            
         elif decoded_body.get('event'):  # Using .get() to safely check for 'event' key
             events = [decoded_body['event']]
         else:
@@ -69,12 +69,35 @@ def receive_event_batch():
         for event in events:
             save_body = {}
             save_body['event'] = event
-            #logger.debug('Event body:\n%s', json.dumps(save_body, indent=4))
-            #save_event_in_kafka(json.dumps(save_body))
+            logger.debug('Event body:\n%s', json.dumps(save_body, indent=4))
+            save_event_in_kafka(json.dumps(save_body))
         return "OK", 200
     except Exception as e:
         logger.error('Getting error while posting event into kafka bus {0}'.format(e))
         return "ERROR", 500
+
+def save_event_in_kafka(body):
+    jobj = json.loads(body)
+    if 'commonEventHeader' in jobj['event']:
+        # store each domain information in individual topic
+        topic = jobj['event']['commonEventHeader']['domain'].lower()
+        logger.info('Got an event request for {} domain'.format(topic))
+        if (len(topic) == 0):
+            topic = config['kafka']['default_topic']
+
+        logger.debug('Kafka broker ={} and kafka topic={}'.format(config['kafka']['host'], topic))
+        produce_events_in_kafka(jobj, topic)
+
+
+def produce_events_in_kafka(jobj, topic):
+    try:
+        producer = KafkaProducer(bootstrap_servers=[config['kafka']['host']],
+                                    value_serializer=lambda x:
+                                    dumps(x).encode('utf-8'))
+        producer.send(topic, value=jobj)
+        logger.debug('Event has been successfully posted into kafka bus')
+    except Exception as e:
+        logger.error('Getting error while posting event into kafka bus {0}'.format(e))
     
 if __name__ == "__main__":
     logger.info("Starting the Flask app.")
