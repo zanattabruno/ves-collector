@@ -26,7 +26,7 @@ def main_page():
 @app.route("/error", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 def error_html():
     logger.warning("Error endpoint accessed.")
-    # ... [rest of the logic remains unchanged]
+    return "Error occurred", 500
 
 @app.route("/eventListener/v5", methods=["POST"])
 def receive_event():
@@ -37,7 +37,7 @@ def receive_event():
         logger.debug('Decoded body:\n%s', json.dumps(decoded_body, indent=4))
         if 'eventList' in decoded_body:
             events = decoded_body['eventList']            
-        elif decoded_body.get('event'):  # Using .get() to safely check for 'event' key
+        elif decoded_body.get('event'):  
             events = [decoded_body['event']]
         else:
             logger.error("JSON body does not contain 'event' or 'eventList'")
@@ -61,7 +61,7 @@ def receive_event_batch():
         logger.debug('Decoded body:\n%s', json.dumps(decoded_body, indent=4))
         if 'eventList' in decoded_body:
             events = decoded_body['eventList']
-        elif decoded_body.get('event'):  # Using .get() to safely check for 'event' key
+        elif decoded_body.get('event'): 
             events = [decoded_body['event']]
         else:
             logger.error("JSON body does not contain 'event' or 'eventList'")
