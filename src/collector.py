@@ -35,6 +35,19 @@ def main_page():
     logger.info("Accessed main page.")
     return "OK", 200
 
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    """
+    Endpoint for checking the health of the application.
+    Returns "OK" with a 200 status code if the application is running.
+    """
+    try:
+        logger.info("Accessed healthz page.")
+        return "OK", 200
+    except Exception as e:
+        logger.error(f"Error accessing healthz page: {e}")
+        return "Internal Server Error", 500
+
 @app.route("/error", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 def error_html():
     """

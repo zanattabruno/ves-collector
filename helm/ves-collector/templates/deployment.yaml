@@ -21,6 +21,12 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.server.port }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.server.port }}
+          initialDelaySeconds: 3
+          periodSeconds: 60
         volumeMounts:
         - name: config-volume
           mountPath: /app/config
