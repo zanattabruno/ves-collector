@@ -6,6 +6,9 @@ server:
   port: 9999 # Port number
   debug: true # Debug mode
 
+ves:
+  api_version: "v5"
+
 # Kafka configuration
 kafka:
   host: "kafka.nonrtric.svc.cluster.local" # Kafka host

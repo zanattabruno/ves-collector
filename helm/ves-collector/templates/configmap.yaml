@@ -11,6 +11,8 @@ data:
       host: {{ .Values.server.host | quote }}
       port: {{ .Values.server.port }}
       debug: {{ .Values.server.debug | quote }}
+    ves:
+      api_version: {{ .Values.ves.api_version | quote }}
     kafka:
       host: {{ .Values.kafka.host | quote }}
       port: {{ .Values.kafka.port }}

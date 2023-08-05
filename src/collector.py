@@ -27,13 +27,14 @@ logger = logging.getLogger(__name__)
 @app.route("/", methods=["GET"])
 def main_page():
     """
-    Main page of the Flask app.
+    Main page of the ves-collector app.
 
     Returns:
         str: "OK" with HTTP status code 200.
     """
     logger.info("Accessed main page.")
-    return "OK", 200
+    version = "1.0.0"
+    return f"VES-COLLECTOR - OK - Version {version}", 200
 
 @app.route("/healthz", methods=["GET"])
 def healthz():
@@ -57,9 +58,16 @@ def error_html():
         str: "Error occurred" with HTTP status code 500.
     """
     logger.warning("Error endpoint accessed.")
-    return "Error occurred", 500
+    error_details = {
+        "error": "An error occurred while processing the request.",
+        "status_code": 500,
+        "request_method": request.method,
+        "request_url": request.url,
+        "request_data": request.data.decode('utf-8')
+    }
+    return json.dumps(error_details), 500
 
-@app.route("/eventListener/v5", methods=["POST"])
+@app.route(f"/eventListener/{config['ves']['api_version']}", methods=["POST"])
 def receive_event():
     """
     Endpoint for receiving a single event.
@@ -67,7 +75,7 @@ def receive_event():
     Returns:
         str: "OK" with HTTP status code 200 if successful, "ERROR" with HTTP status code 500 if unsuccessful.
     """
-    logger.info("Received event at /eventListener/v5")
+    logger.info(f"Received event at /eventListener/{config['ves']['api_version']}")
     try:
         body = request.get_data().decode('utf-8')
         decoded_body = json.loads(body)
@@ -89,7 +97,7 @@ def receive_event():
         logger.error('Getting error while posting event into kafka bus {0}'.format(e))
         return "ERROR", 500
     
-@app.route("/eventListener/v5/eventBatch", methods=["POST"])
+@app.route(f"/eventListener/{config['ves']['api_version']}/eventBatch", methods=["POST"])
 def receive_event_batch():
     """
     Endpoint for receiving a batch of events.
@@ -97,7 +105,7 @@ def receive_event_batch():
     Returns:
         str: "OK" with HTTP status code 200 if successful, "ERROR" with HTTP status code 500 if unsuccessful.
     """
-    logger.info("Received event batch at /eventListener/v5/eventBatch")
+    logger.info(f"Received event batch at /eventListener/{config['ves']['api_version']}/eventBatch")
     try:
         body = request.get_data().decode('utf-8')
         decoded_body = json.loads(body)
@@ -129,16 +137,27 @@ def save_event_in_kafka(body):
     Raises:
         ValueError: If the JSON body does not contain 'event' or 'eventList'.
     """
-    jobj = json.loads(body)
-    if 'commonEventHeader' in jobj['event']:
-        # store each domain information in individual topic
-        topic = jobj['event']['commonEventHeader']['domain'].lower()
-        logger.info('Got an event request for {} domain'.format(topic))
-        if (len(topic) == 0):
-            topic = config['kafka']['default_topic']
+    try:
+        jobj = json.loads(body)
+        event = jobj.get('event')
+        if not event:
+            raise ValueError("JSON body does not contain 'event'")
 
-        logger.debug('Kafka broker ={} and kafka topic={}'.format(config['kafka']['host'], topic))
+        common_header = event.get('commonEventHeader')
+        if not common_header:
+            raise ValueError("JSON body does not contain 'commonEventHeader'")
+
+        domain = common_header.get('domain', '').lower()
+        if not domain:
+            topic = config['kafka']['default_topic']
+        else:
+            topic = domain
+
+        logger.info(f"Got an event request for {topic} domain")
+        logger.debug(f"Kafka broker={config['kafka']['host']} and kafka topic={topic}")
         produce_events_in_kafka(jobj, topic)
+    except Exception as e:
+        logger.error(f"Error while saving event in Kafka: {e}")
 
 
 def produce_events_in_kafka(jobj, topic):
@@ -153,18 +172,23 @@ def produce_events_in_kafka(jobj, topic):
         Exception: If there is an error while posting the event into Kafka.
     """
     try:
-        producer = KafkaProducer(bootstrap_servers=[config['kafka']['host']],
-                                    value_serializer=lambda x:
-                                    dumps(x).encode('utf-8'))
+        producer = KafkaProducer(
+            bootstrap_servers=[config['kafka']['host']],
+            value_serializer=lambda x: dumps(x).encode('utf-8')
+        )
         producer.send(topic, value=jobj)
         logger.debug('Event has been successfully posted into kafka bus')
     except Exception as e:
-        logger.error('Getting error while posting event into kafka bus {0}'.format(e))
+        logger.error(f'Error while posting event into kafka bus: {e}')
+        raise
     
 if __name__ == "__main__":
-    logger.info("Starting the Flask app.")
-    app.run(
-        host=config['server']['host'], 
-        port=config['server']['port'], 
-        debug=config['server']['debug']
-    )
+    try:
+        logger.info("Starting the ves-collector app.")
+        app.run(
+            host=config['server']['host'], 
+            port=config['server']['port'], 
+            debug=config['server']['debug']        )
+
+    except Exception as e:
+        logger.error(f"Error starting the ves-collector app: {e}")
