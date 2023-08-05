@@ -1,0 +1,24 @@
+replicaCount: 1
+namespace: smo
+
+image:
+  repository: zanattabruno/ves-collector
+  pullPolicy: Always
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 9999
+
+server:
+  host: "0.0.0.0"
+  port: 9999
+  debug: true
+
+kafka:
+  host: "kafka.smo.svc.cluster.local"
+  port: 9092
+  default_topic: "ves"
+
+logging:
+  level: INFO

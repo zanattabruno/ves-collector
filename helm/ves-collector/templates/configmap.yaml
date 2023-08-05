@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ves-collector-config
+  namespace: {{ .Values.namespace }}
+  labels:
+      {{- include "ves-collector.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    server:
+      host: {{ .Values.server.host | quote }}
+      port: {{ .Values.server.port }}
+      debug: {{ .Values.server.debug | quote }}
+    kafka:
+      host: {{ .Values.kafka.host | quote }}
+      port: {{ .Values.kafka.port }}
+      default_topic: {{ .Values.kafka.default_topic | quote }}
+    logging:
+      level: {{ .Values.logging.level | quote }}

@@ -1,0 +1,4 @@
+apiVersion: v2
+name: ves-collector
+description: A Helm chart for ves collector
+version: 0.1.0

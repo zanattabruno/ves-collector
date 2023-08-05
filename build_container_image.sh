@@ -9,7 +9,7 @@ fi
 
 # Define the Docker image name and tag
 IMAGE_NAME="ves-collector"
-TAG="lastest"
+TAG="latest"
 
 # Define the Docker Hub username
 DOCKER_HUB_USERNAME="zanattabruno"
