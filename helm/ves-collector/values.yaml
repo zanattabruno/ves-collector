@@ -1,27 +1,36 @@
+# Number of replicas for the deployment
 replicaCount: 1
+
+# Namespace where the deployment will be created
 namespace: smo
 
+# Docker image configuration
 image:
   repository: zanattabruno/ves-collector
   pullPolicy: Always
   tag: latest
 
+# Service configuration
 service:
   type: ClusterIP
   port: 9999
 
+# Server configuration
 server:
   host: "0.0.0.0"
   port: 9999
   debug: true
 
+# VES configuration
 ves:
   api_version: "v5"
 
+# Kafka configuration
 kafka:
   host: "kafka.smo.svc.cluster.local"
   port: 9092
   default_topic: "ves"
 
+# Logging configuration
 logging:
   level: INFO
