@@ -1,6 +1,8 @@
 # O1 VNF Event Streaming (VES) Collector
 Virtual Event Streaming (VES) Collector (formerly known as Standard Event Collector/Common Event Collector) is RESTful collector for processing JSON messages into Kafka. The collector supports individual events or eventbatch posted to collector end-point(s) and post them to interface/bus for other application to subscribe. The collector verifies the source (when authentication is enabled) and validates the events against VES schema before distributing to Kafka topics for downstream system to subscribe. The VESCollector also supports configurable event transformation function and event distribution to Kafka topics.
 
+![Alt text](images/VES-O1.png "Basic VES Collector Architecture")
+
 ## VES Schema Validation
 
 VES Collector is configured to support the versions of VES listed below. The corresponding API uses the VES schema definition for event validation.
@@ -28,6 +30,8 @@ VES Collector is configured to support the versions of VES listed below. The cor
 
 ## VES Collector Helm Installation
 
+### Prerequisites
+To begin with, ensure you have a Kubernetes cluster set up. Both the `kubectl` and `helm` command-line tools should be configured to communicate with your cluster. It's essential to have Near-RT RIC deployed within this cluster. Additionally, configure the VESPA manager from Near-RT RIC to forward data to your `ves-collector`. For detailed guidance on deploying Near-RT RIC, refer to the [official documentation](https://docs.o-ran-sc.org/projects/o-ran-sc-ric-plt-ric-dep/en/latest/installation-guides.html).
 ### values.yaml
 ```yaml
 # Number of replicas for the deployment
@@ -46,6 +50,7 @@ image:
 service:
   type: ClusterIP
   port: 9999
+  name: ves-collector
 
 # Server configuration
 server:
@@ -68,7 +73,9 @@ logging:
   level: INFO
 ```
 ### Deploying the chart
+We recommend the use of another namespace to deploy the chart. In this example, we will use the namespace `smo` to deploy the chart.
+
 ```bash
 cd ves-collector
-helm install ves-collector helm/ves-collector -f values.yaml
+helm install ves-collector helm/ves-collector -f values.yaml -n smo
 ```
