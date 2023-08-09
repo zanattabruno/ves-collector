@@ -1,7 +1,7 @@
 # O1 VNF Event Streaming (VES) Collector
 Virtual Event Streaming (VES) Collector (formerly known as Standard Event Collector/Common Event Collector) is RESTful collector for processing JSON messages into Kafka. The collector supports individual events or eventbatch posted to collector end-point(s) and post them to interface/bus for other application to subscribe. The collector validates the events against VES schema before distributing to Kafka topics for downstream system to subscribe. The VESCollector also supports event distribution to Kafka topics.
 
-![Alt text](images/VES-O1.png "Basic VES Collector Architecture")
+![Basic VES Collector Architecture](images/VES-O1.png "Basic VES Collector Architecture")
 
 ## VES Schema Validation
 
