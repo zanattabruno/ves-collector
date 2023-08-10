@@ -153,20 +153,27 @@ def save_event_in_kafka(body):
         else:
             topic = domain
 
+        # Extract headers
+        source_name = common_header.get('sourceName')
+        headers = []
+        if source_name:
+            headers.append(('sourceName', source_name.encode('utf-8')))
+
         logger.info(f"Got an event request for {topic} domain")
         logger.debug(f"Kafka broker={config['kafka']['host']} and kafka topic={topic}")
-        produce_events_in_kafka(jobj, topic)
+        produce_events_in_kafka(jobj, topic, headers)
     except Exception as e:
         logger.error(f"Error while saving event in Kafka: {e}")
 
 
-def produce_events_in_kafka(jobj, topic):
+def produce_events_in_kafka(jobj, topic, headers=None):
     """
     Produce events in Kafka.
 
     Args:
         jobj (dict): Dictionary representing the event.
         topic (str): Name of the Kafka topic.
+        headers (list[tuple]): List of tuples representing headers.
 
     Raises:
         Exception: If there is an error while posting the event into Kafka.
@@ -176,7 +183,7 @@ def produce_events_in_kafka(jobj, topic):
             bootstrap_servers=[config['kafka']['host']],
             value_serializer=lambda x: dumps(x).encode('utf-8')
         )
-        producer.send(topic, value=jobj)
+        producer.send(topic, value=jobj, headers=headers)
         logger.debug('Event has been successfully posted into kafka bus')
     except Exception as e:
         logger.error(f'Error while posting event into kafka bus: {e}')
