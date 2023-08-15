@@ -31,3 +31,5 @@ fi
 docker push ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:${TAG}
 
 echo "Docker image has been pushed to Docker Hub: ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:${TAG}"
+
+kubectl rollout restart deployment ves-collector

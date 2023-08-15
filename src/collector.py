@@ -127,19 +127,44 @@ def receive_event_batch():
         logger.error('Getting error while posting event into kafka bus {0}'.format(e))
         return "ERROR", 500
 
-def save_event_in_kafka(body):
+def extract_topic_from_event(event):
     """
-    Save an event in Kafka.
+    Extracts the topic from the given event.
 
     Args:
-        body (str): JSON string representing the event.
+        event (dict): The event to extract the topic from.
+
+    Returns:
+        str: The topic extracted from the event.
+    """
+    measurements = event.get('measurementsForVfScalingFields')
+    if measurements:
+        for obj in measurements.get('additionalObjects', []):
+            for instance in obj.get('objectInstances', []):
+                for key in instance.get('objectKeys', []):
+                    if key.get('keyName') == 'measType':
+                        return key.get('keyValue')
+
+    domain = event.get('commonEventHeader', {}).get('domain', '').lower()
+    return domain or config['kafka'].get('default_topic')
+
+def save_event_in_kafka(body):
+    """
+    Extracts event information from a JSON body and saves it in Kafka.
+
+    Args:
+        body (str): JSON string containing event information.
 
     Raises:
-        ValueError: If the JSON body does not contain 'event' or 'eventList'.
+        ValueError: If the JSON body does not contain 'event' or 'commonEventHeader'.
+
+    Returns:
+        None
     """
     try:
         jobj = json.loads(body)
         event = jobj.get('event')
+        
         if not event:
             raise ValueError("JSON body does not contain 'event'")
 
@@ -147,11 +172,7 @@ def save_event_in_kafka(body):
         if not common_header:
             raise ValueError("JSON body does not contain 'commonEventHeader'")
 
-        domain = common_header.get('domain', '').lower()
-        if not domain:
-            topic = config['kafka']['default_topic']
-        else:
-            topic = domain
+        topic = extract_topic_from_event(event)
 
         # Extract headers
         source_name = common_header.get('sourceName')
@@ -162,8 +183,12 @@ def save_event_in_kafka(body):
         logger.info(f"Got an event request for {topic} domain")
         logger.debug(f"Kafka broker={config['kafka']['host']} and kafka topic={topic}")
         produce_events_in_kafka(jobj, topic, headers)
+
+    except ValueError as ve:
+        logger.error(str(ve))
     except Exception as e:
         logger.error(f"Error while saving event in Kafka: {e}")
+
 
 
 def produce_events_in_kafka(jobj, topic, headers=None):
